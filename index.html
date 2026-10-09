@@ -4,12 +4,187 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Тендеры медтехники РК</title>
+<meta name="description" content="Новые лоты med.ecc.kz и fms.ecc.kz по темам, самые важные сверху. Обновляется каждое утро.">
 <link rel="alternate" type="application/rss+xml" title="Тендеры медтехники РК: новые лоты по темам" href="feed.xml">
-<style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px;color:#222;background:#fff}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1c1d1f; --muted:#6b6f76; --line:#e6e3dd;
+  --accent:#0f6e64; --accent-soft:#e3f1ee; --gold:#b7791f; --gold-soft:#fbf1df;
+  --urgent:#b42318; --urgent-soft:#fdecea; --chip:#efede8; --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121315; --card:#1b1d20; --ink:#ecedee; --muted:#9aa0a6; --line:#2a2d31;
+    --accent:#5cc8b8; --accent-soft:#16302c; --gold:#e5b45a; --gold-soft:#33291a;
+    --urgent:#ff8a80; --urgent-soft:#3a1f1d; --chip:#25282c; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 64px}
+header h1{font-size:26px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px;font-size:13px;color:var(--muted)}
+.meta a{color:var(--accent);text-decoration:none}
+.controls{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 10px;margin-top:18px;border-bottom:1px solid var(--line)}
+.search{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.search:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font:500 13px/1.4 inherit;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .n{opacity:.6;margin-left:4px;font-weight:400}
+.day{margin:26px 0 10px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);color:inherit;text-decoration:none;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.amount{font-size:20px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stars{font-size:13px;color:var(--gold);background:var(--gold-soft);border-radius:6px;padding:1px 7px;white-space:nowrap}
+.stars.s1{color:var(--muted);background:var(--chip)}
+.name{margin:4px 0 8px;font-weight:500;font-size:15.5px}
+.row{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--muted)}
+.tag{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 8px;font-weight:500}
+.tag.plat{background:var(--chip);color:var(--muted)}
+.due.soon{color:var(--urgent);font-weight:600}
+.due.gone{text-decoration:line-through}
+.empty{padding:40px 0;text-align:center;color:var(--muted)}
+footer{margin-top:36px;font-size:12.5px;color:var(--muted)}
+footer a{color:var(--accent)}
+@media (max-width:480px){header h1{font-size:22px}.amount{font-size:18px}.card{padding:12px 14px}}
+</style>
 </head>
 <body>
-<h1>Тендеры медтехники РК</h1>
-<p>Каждое утро сюда приходят новые лоты med.ecc.kz и fms.ecc.kz по темам: лабораторная диагностика, мониторы пациента, шприцевые насосы, ЭКГ, УЗИ, гепариновые шприцы. Сверху самые важные.</p>
-<p>RSS-лента: <a href="feed.xml">feed.xml</a>. Её адрес можно добавить в Feedly или любую другую читалку. Обновляется каждое утро, около 03:30 по Астане.</p>
+<div class="wrap">
+  <header>
+    <h1>Тендеры медтехники РК</h1>
+    <p>Новые лоты med.ecc.kz и fms.ecc.kz по нашим темам. Самые важные сверху.</p>
+    <div class="meta"><span id="updated">Загружаю…</span><a href="feed.xml">RSS для Feedly</a></div>
+  </header>
+
+  <div class="controls">
+    <input class="search" id="q" type="search" placeholder="Поиск: заказчик, регион, наименование" aria-label="Поиск">
+    <div class="chips" id="stars" role="group" aria-label="Важность"></div>
+    <div class="chips" id="topics" role="group" aria-label="Темы"></div>
+  </div>
+
+  <main id="list"></main>
+
+  <footer>
+    ★★★ оборудование по нашим темам или лот от 50 млн ₸ · ★★ от 5 млн ₸ · ★ остальное.
+    Данные с открытых порталов med.ecc.kz и fms.ecc.kz. Обновляется каждое утро около 03:30 по Астане.
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const state = { q: "", topic: "Все", stars: 0 };
+let items = [];
+
+const para = (html, label) => {
+  const m = html.match(new RegExp("<p>" + label + ":\\s*([\\s\\S]*?)</p>"));
+  return m ? m[1].replace(/<[^>]+>/g, "").trim() : "";
+};
+
+function parse(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+  const built = doc.querySelector("lastBuildDate")?.textContent;
+  const out = [...doc.querySelectorAll("item")].map(it => {
+    const title = it.querySelector("title").textContent;
+    const desc = it.querySelector("description").textContent;
+    const [head, topic, ...rest] = title.split(" · ");
+    const stars = (head.match(/★/g) || []).length;
+    const amount = head.replace(/★/g, "").trim();
+    const name = (desc.match(/<b>([\s\S]*?)<\/b>/) || [, rest.join(" · ")])[1];
+    const kindLine = para(desc, "Тема").split(" · ");
+    const sumLine = para(desc, "Сумма");
+    const qty = (sumLine.match(/\(([^)]+)\)/) || [])[1] || "";
+    const dueLine = para(desc, "Приём заявок до").split(" · ");
+    const pub = new Date(it.querySelector("pubDate").textContent);
+    return {
+      stars, amount, topic, name, qty, pub,
+      kind: kindLine.slice(1).join(" · "),
+      customer: para(desc, "Заказчик"),
+      due: dueLine[0] || "", platform: dueLine[1] || "",
+      link: it.querySelector("link").textContent,
+    };
+  });
+  return { built, out };
+}
+
+function dueInfo(due, pub) {
+  const m = due.match(/(\d\d)\.(\d\d)\s+(\d\d):(\d\d)/);
+  if (!m) return { text: due || "—", cls: "" };
+  let d = new Date(pub.getFullYear(), +m[2] - 1, +m[1], +m[3], +m[4]);
+  if (d < pub - 864e5 * 30) d.setFullYear(d.getFullYear() + 1);
+  const days = Math.ceil((d - new Date()) / 864e5);
+  const when = days < 0 ? "срок прошёл" : days === 0 ? "сегодня" : days === 1 ? "завтра" : `через ${days} дн.`;
+  return { text: `заявки до ${m[1]}.${m[2]} ${m[3]}:${m[4]}, ${when}`, cls: days < 0 ? "gone" : days <= 3 ? "soon" : "" };
+}
+
+function dayLabel(d) {
+  const a = new Date(d); a.setHours(0, 0, 0, 0);
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const diff = Math.round((t - a) / 864e5);
+  if (diff === 0) return "Сегодня";
+  if (diff === 1) return "Вчера";
+  return a.toLocaleDateString("ru-RU", { day: "numeric", month: "long", weekday: "long" });
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function chips(el, values, key, labelOf) {
+  el.innerHTML = values.map(([v, n]) =>
+    `<button class="chip" data-v="${esc(v)}" aria-pressed="${state[key] == v}">${esc(labelOf(v))}<span class="n">${n}</span></button>`).join("");
+  el.onclick = e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    state[key] = key === "stars" ? +b.dataset.v : b.dataset.v;
+    render();
+  };
+}
+
+function render() {
+  const q = state.q.toLowerCase();
+  const byQ = items.filter(i => !q || (i.name + " " + i.customer + " " + i.topic).toLowerCase().includes(q));
+  const byStars = byQ.filter(i => i.stars >= state.stars);
+  const shown = byStars.filter(i => state.topic === "Все" || i.topic === state.topic);
+
+  const starCounts = [0, 2, 3].map(s => [s, byQ.filter(i => i.stars >= s).length]);
+  chips($("#stars"), starCounts, "stars", s => s === 0 ? "Любая важность" : s === 3 ? "★★★" : "★★ и выше");
+  const tc = {};
+  byStars.forEach(i => tc[i.topic] = (tc[i.topic] || 0) + 1);
+  chips($("#topics"), [["Все", byStars.length], ...Object.entries(tc).sort((a, b) => b[1] - a[1])], "topic", t => t);
+
+  if (!shown.length) { $("#list").innerHTML = `<p class="empty">Под фильтр ничего не попало.</p>`; return; }
+  let html = "", last = "";
+  shown.forEach(i => {
+    const day = dayLabel(i.pub);
+    if (day !== last) { html += `<h2 class="day">${esc(day)}</h2>`; last = day; }
+    const due = dueInfo(i.due, i.pub);
+    html += `<a class="card" href="${esc(i.link)}" target="_blank" rel="noopener">
+      <div class="top"><span class="amount">${esc(i.amount)}</span><span class="stars s${i.stars}">${"★".repeat(i.stars)}</span></div>
+      <div class="name">${esc(i.name)}${i.qty ? ` <span style="color:var(--muted);font-weight:400">· ${esc(i.qty)}</span>` : ""}</div>
+      <div class="row"><span class="tag">${esc(i.topic)}</span>${i.platform ? `<span class="tag plat">${esc(i.platform)}</span>` : ""}<span>${esc(i.customer)}</span></div>
+      <div class="row" style="margin-top:6px"><span class="due ${due.cls}">${esc(due.text)}</span></div>
+    </a>`;
+  });
+  $("#list").innerHTML = html;
+}
+
+$("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+
+fetch("feed.xml", { cache: "no-store" })
+  .then(r => r.text())
+  .then(t => {
+    const { built, out } = parse(t);
+    items = out;
+    const b = built ? new Date(built) : null;
+    $("#updated").textContent = (b ? "Обновлено " + b.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "") + ` · ${items.length} лотов за неделю`;
+    render();
+  })
+  .catch(() => { $("#updated").textContent = "Не удалось загрузить ленту"; });
+</script>
 </body>
 </html>
