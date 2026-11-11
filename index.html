@@ -56,14 +56,29 @@ header p{margin:0;color:var(--muted)}
 footer{margin-top:36px;font-size:12.5px;color:var(--muted)}
 footer a{color:var(--accent)}
 @media (max-width:480px){header h1{font-size:22px}.amount{font-size:18px}.card{padding:12px 14px}}
+/* Переключатель RU/EN: тексты страницы лежат парами <span lang="ru"> / <span lang="en"> */
+html:not(.en) [lang="en"]{display:none!important}
+html.en [lang="ru"]{display:none!important}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.lang{display:flex;flex:none;background:var(--chip);border-radius:999px;padding:3px}
+.lang button{border:0;background:none;color:var(--muted);font:600 13px/1 inherit;padding:7px 11px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){.lang button[aria-pressed=true]{color:#0b1a18}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Тендеры медтехники РК</h1>
-    <p>Новые лоты med.ecc.kz и fms.ecc.kz по нашим темам. Самые важные сверху.</p>
-    <div class="meta"><span id="updated">Загружаю…</span><a href="feed.xml">RSS для Feedly</a></div>
+    <div class="head">
+      <h1><span lang="ru">Тендеры медтехники РК</span><span lang="en">Kazakhstan medtech tenders</span></h1>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="lang-ru" aria-pressed="true">RU</button>
+        <button type="button" id="lang-en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+    <p lang="ru">Новые лоты med.ecc.kz и fms.ecc.kz по нашим темам. Самые важные сверху.</p>
+    <p lang="en">New lots from med.ecc.kz and fms.ecc.kz in our areas, most important first. Lot names and buyers are shown as published, in Russian.</p>
+    <div class="meta"><span id="updated">…</span><a href="feed.xml"><span lang="ru">RSS для Feedly</span><span lang="en">RSS for Feedly</span></a></div>
   </header>
 
   <div class="controls">
@@ -75,15 +90,40 @@ footer a{color:var(--accent)}
   <main id="list"></main>
 
   <footer>
-    ★★★ оборудование по нашим темам или лот от 50 млн ₸ · ★★ от 5 млн ₸ · ★ остальное.
-    Данные с открытых порталов med.ecc.kz и fms.ecc.kz. Обновляется каждое утро около 03:30 по Астане.
+    <span lang="ru">★★★ оборудование по нашим темам или лот от 50 млн ₸ · ★★ от 5 млн ₸ · ★ остальное.
+    Данные с открытых порталов med.ecc.kz и fms.ecc.kz. Обновляется каждое утро около 03:30 по Астане.</span>
+    <span lang="en">★★★ equipment in our areas or a lot over 50 M ₸ · ★★ over 5 M ₸ · ★ everything else.
+    Data from the public portals med.ecc.kz and fms.ecc.kz. Updated every morning at about 03:30 Astana time.</span>
   </footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
-const state = { q: "", topic: "Все", stars: 0 };
-let items = [];
+const state = { q: "", topic: "Все", stars: 0, lang: "ru" };
+let items = [], built = null;
+
+// Подписи на двух языках. Наименования лотов и заказчики остаются как на портале (по-русски).
+const UI = {
+  ru: { search: "Поиск: заказчик, регион, наименование", all: "Все", anyStars: "Любая важность", stars2: "★★ и выше",
+        nothing: "Под фильтр ничего не попало.", loading: "Загружаю…", fail: "Не удалось загрузить ленту",
+        updated: "Обновлено ", lots: n => `${n} лотов за неделю`, today: "Сегодня", yesterday: "Вчера",
+        gone: "срок прошёл", d0: "сегодня", d1: "завтра", dn: n => `через ${n} дн.`, until: "заявки до ", locale: "ru-RU" },
+  en: { search: "Search: buyer, region, item", all: "All", anyStars: "Any importance", stars2: "★★ and up",
+        nothing: "Nothing matches this filter.", loading: "Loading…", fail: "Could not load the feed",
+        updated: "Updated ", lots: n => `${n} lots this week`, today: "Today", yesterday: "Yesterday",
+        gone: "deadline passed", d0: "today", d1: "tomorrow", dn: n => `in ${n} days`, until: "bids until ", locale: "en-GB" }
+};
+const TOPIC_EN = {
+  "Иммунохимия": "Immunochemistry", "Гематология": "Hematology", "Биохимия": "Clinical chemistry",
+  "Мониторы пациента и пульсоксиметры": "Patient monitors and pulse oximeters", "ЭКГ": "ECG", "Газы крови / КЩС": "Blood gas",
+  "Коагулология": "Coagulation", "Шовные материалы": "Sutures", "Анализ мочи": "Urinalysis", "Микробиология": "Microbiology",
+  "УЗИ-аппараты и датчики": "Ultrasound systems and probes", "Шприцевые / инфузионные насосы": "Syringe and infusion pumps",
+  "HbA1c": "HbA1c", "Дефибрилляторы": "Defibrillators", "Все": "All"
+};
+const t = k => UI[state.lang][k];
+const topicName = s => state.lang === "en" ? (TOPIC_EN[s] ?? s) : s;
+// «16,5 млн ₸» → «16.5 M ₸» для английской версии
+const amountText = s => state.lang === "en" ? s.replace(/(\d),(\d)/g, "$1.$2").replace(/\s*млрд/, " B").replace(/\s*млн/, " M").replace(/\s*тыс\./, " K") : s;
 
 const para = (html, label) => {
   const m = html.match(new RegExp("<p>" + label + ":\\s*([\\s\\S]*?)</p>"));
@@ -122,17 +162,17 @@ function dueInfo(due, pub) {
   let d = new Date(pub.getFullYear(), +m[2] - 1, +m[1], +m[3], +m[4]);
   if (d < pub - 864e5 * 30) d.setFullYear(d.getFullYear() + 1);
   const days = Math.ceil((d - new Date()) / 864e5);
-  const when = days < 0 ? "срок прошёл" : days === 0 ? "сегодня" : days === 1 ? "завтра" : `через ${days} дн.`;
-  return { text: `заявки до ${m[1]}.${m[2]} ${m[3]}:${m[4]}, ${when}`, cls: days < 0 ? "gone" : days <= 3 ? "soon" : "" };
+  const when = days < 0 ? t("gone") : days === 0 ? t("d0") : days === 1 ? t("d1") : t("dn")(days);
+  return { text: `${t("until")}${m[1]}.${m[2]} ${m[3]}:${m[4]}, ${when}`, cls: days < 0 ? "gone" : days <= 3 ? "soon" : "" };
 }
 
 function dayLabel(d) {
   const a = new Date(d); a.setHours(0, 0, 0, 0);
-  const t = new Date(); t.setHours(0, 0, 0, 0);
-  const diff = Math.round((t - a) / 864e5);
-  if (diff === 0) return "Сегодня";
-  if (diff === 1) return "Вчера";
-  return a.toLocaleDateString("ru-RU", { day: "numeric", month: "long", weekday: "long" });
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const diff = Math.round((now - a) / 864e5);
+  if (diff === 0) return t("today");
+  if (diff === 1) return t("yesterday");
+  return a.toLocaleDateString(t("locale"), { day: "numeric", month: "long", weekday: "long" });
 }
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -154,21 +194,21 @@ function render() {
   const shown = byStars.filter(i => state.topic === "Все" || i.topic === state.topic);
 
   const starCounts = [0, 2, 3].map(s => [s, byQ.filter(i => i.stars >= s).length]);
-  chips($("#stars"), starCounts, "stars", s => s === 0 ? "Любая важность" : s === 3 ? "★★★" : "★★ и выше");
+  chips($("#stars"), starCounts, "stars", s => s === 0 ? t("anyStars") : s === 3 ? "★★★" : t("stars2"));
   const tc = {};
   byStars.forEach(i => tc[i.topic] = (tc[i.topic] || 0) + 1);
-  chips($("#topics"), [["Все", byStars.length], ...Object.entries(tc).sort((a, b) => b[1] - a[1])], "topic", t => t);
+  chips($("#topics"), [["Все", byStars.length], ...Object.entries(tc).sort((a, b) => b[1] - a[1])], "topic", topicName);
 
-  if (!shown.length) { $("#list").innerHTML = `<p class="empty">Под фильтр ничего не попало.</p>`; return; }
+  if (!shown.length) { $("#list").innerHTML = `<p class="empty">${t("nothing")}</p>`; return; }
   let html = "", last = "";
   shown.forEach(i => {
     const day = dayLabel(i.pub);
     if (day !== last) { html += `<h2 class="day">${esc(day)}</h2>`; last = day; }
     const due = dueInfo(i.due, i.pub);
     html += `<a class="card" href="${esc(i.link)}" target="_blank" rel="noopener">
-      <div class="top"><span class="amount">${esc(i.amount)}</span><span class="stars s${i.stars}">${"★".repeat(i.stars)}</span></div>
+      <div class="top"><span class="amount">${esc(amountText(i.amount))}</span><span class="stars s${i.stars}">${"★".repeat(i.stars)}</span></div>
       <div class="name">${esc(i.name)}${i.qty ? ` <span style="color:var(--muted);font-weight:400">· ${esc(i.qty)}</span>` : ""}</div>
-      <div class="row"><span class="tag">${esc(i.topic)}</span>${i.platform ? `<span class="tag plat">${esc(i.platform)}</span>` : ""}<span>${esc(i.customer)}</span></div>
+      <div class="row"><span class="tag">${esc(topicName(i.topic))}</span>${i.platform ? `<span class="tag plat">${esc(i.platform)}</span>` : ""}<span>${esc(i.customer)}</span></div>
       <div class="row" style="margin-top:6px"><span class="due ${due.cls}">${esc(due.text)}</span></div>
     </a>`;
   });
@@ -177,16 +217,42 @@ function render() {
 
 $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
 
+let loaded = false, failed = false;
+function header() {
+  if (failed) { $("#updated").textContent = t("fail"); return; }
+  if (!loaded) { $("#updated").textContent = t("loading"); return; }
+  const b = built ? new Date(built) : null;
+  $("#updated").textContent = (b ? t("updated") + b.toLocaleString(t("locale"), { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) + " · " : "") + t("lots")(items.length);
+}
+
+// Язык: ?lang=en в адресе (так ссылается sagynrus.kz в английской версии) или прошлый выбор в этом браузере.
+function setLang(l) {
+  state.lang = l === "en" ? "en" : "ru";
+  const root = document.documentElement;
+  root.classList.toggle("en", state.lang === "en");
+  root.lang = state.lang;
+  $("#lang-ru").setAttribute("aria-pressed", state.lang === "ru");
+  $("#lang-en").setAttribute("aria-pressed", state.lang === "en");
+  $("#q").placeholder = t("search");
+  try { localStorage.setItem("lang", state.lang); } catch (e) {}
+  header();
+  if (loaded) render();
+}
+$("#lang-ru").onclick = () => setLang("ru");
+$("#lang-en").onclick = () => setLang("en");
+let saved = new URLSearchParams(location.search).get("lang");
+if (!saved) { try { saved = localStorage.getItem("lang"); } catch (e) {} }
+setLang(saved);
+
 fetch("feed.xml", { cache: "no-store" })
   .then(r => r.text())
-  .then(t => {
-    const { built, out } = parse(t);
-    items = out;
-    const b = built ? new Date(built) : null;
-    $("#updated").textContent = (b ? "Обновлено " + b.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "") + ` · ${items.length} лотов за неделю`;
+  .then(text => {
+    const p = parse(text);
+    items = p.out; built = p.built; loaded = true;
+    header();
     render();
   })
-  .catch(() => { $("#updated").textContent = "Не удалось загрузить ленту"; });
+  .catch(() => { failed = true; header(); });
 </script>
 </body>
 </html>
